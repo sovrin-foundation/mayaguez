@@ -1,0 +1,23 @@
+[package]
+authors = ["The Hyperledger Aries Contributors"]
+edition = "2018"
+keywords = ["agents", "aries", "blockchain", "hyperledger"]
+name = "aries-core-rs"
+license = "Apache-2.0"
+version = "0.1.0"
+
+[lib]
+crate-type = ["staticlib", "rlib", "cdylib"]
+name = "aries"
+path = "src/lib.rs"
+
+[profile.release]
+lto = true
+
+[features]
+
+
+[dependencies]
+
+
+[dev-dependencies]
