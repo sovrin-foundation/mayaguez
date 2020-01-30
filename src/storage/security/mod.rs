@@ -28,6 +28,11 @@
 //! Software enclaves usually do not provide the same guarantees as hardware but
 //! have the flexibility of portability and deployment. The best approach is use
 //! a combination of these two to create an optimal solution. 
+//! 
+//! For example, use the software enclave provided by the operating system to
+//! store credentials to the hardware or external enclave. Once the credentials
+//! are retrieved from the OS enclave, they can be used to connect to the 
+//! hardware or external enclave.
 
 use failure::{Backtrace, Context, Fail};
 use std::{fmt, path::Path};
