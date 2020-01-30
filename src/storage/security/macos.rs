@@ -41,16 +41,18 @@
 //!
 //! [codesign]: https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html#//apple_ref/doc/uid/TP40005929-CH4-SW4
 
-use super::{EnclaveLike, EnclaveResult, EnclaveConfig, EnclaveError, EnclaveErrorKind};
+use super::{EnclaveLike, EnclaveResult, EnclaveConfig, EnclaveErrorKind};
 
-use keychain_services::keychain::KeyChain;
+//use keychain_services::keychain::KeyChain;
 use security_framework::os::macos::keychain::*;
+use std::path::Path;
 
 /// MacOSX and iOS implementation for keyrings that function like an enclave
 pub struct MacOsKeyRing(SecKeychain);
 
 impl MacOsKeyRing {
-    pub fn create(path: Path, password: Option<&str>) -> EnclaveResult<Self> {
+    /// Create a new keyring at the specified location on the filesystem
+    pub fn create(path: &Path, password: Option<&str>) -> EnclaveResult<Self> {
         let mut options = CreateOptions::new();
         options.prompt_user(false);
         match password {
@@ -61,40 +63,45 @@ impl MacOsKeyRing {
         Ok(Self(options.create(path)?))
     }
 
-    pub fn open(path: Path) -> EnclaveResult<Self> {
-        Ok(Self(SecKeychain::open(path))?)
+    /// Open a keyring from a file
+    pub fn open(path: &Path) -> EnclaveResult<Self> {
+        Ok(Self(SecKeychain::open(path)?))
     }
 
+    /// Unlock the keyring. If `password` is not specified, the user will be prompted to enter it.
     pub fn unlock(&mut self, password: Option<&str>) -> EnclaveResult<()> {
-        self.0.unlock(password)
+        self.0.unlock(password)?;
+        Ok(())
     }
 
+    /// Connect to the user's default keyring
     pub fn default() -> EnclaveResult<Self> {
         let keychain = SecKeychain::default()?;
-        Self(keychain)
+        Ok(Self(keychain))
     }
 }
 
 impl EnclaveLike for MacOsKeyRing {
-    fn connect(config: EnclaveConfig<A, B>) -> EnclaveResult<Self> {
+    fn connect<A: AsRef<Path>, B: Into<String>>(config: EnclaveConfig<A, B>) -> EnclaveResult<Self> {
         if let EnclaveConfig::OsKeyRing(c) = config {
+            let pass = c.password.map(|p| p.into());
             let mut keychain = match c.path {
                 Some(p) => {
                     let path = p.as_ref();
                     if path.exists() {
-                        Self::create(path, c.password.as_ref())?
+                        Self::create(path, pass.as_ref().map(|e| e.as_str()))?
                     } else {
                         Self::open(path)?
                     }
                 },
                 None => {
-                    Self::default()
+                    Self::default()?
                 }
             };
-            keychain.unlock()?
+            keychain.unlock(pass.as_ref().map(|p| p.as_str()))?;
             Ok(keychain)
         } else {
-            Err(EnclaveError::from_msg(EnclaveErrorKind::ConnectionError, format!("Invalid configuration type. Expected OsKeyRing but found {:?}", config)))
+            Err(EnclaveErrorKind::ConnectionFailure { msg: format!("Invalid configuration type. Expected OsKeyRing but found {}", config) }.into())
         }
     }
 

@@ -142,9 +142,18 @@ impl From<security_framework::base::Error> for EnclaveError {
 /// support more crypto primitives like encryption and signatures.
 /// For now, we do not support attestations as these are often
 /// broken anyway and complex.
+#[derive(Debug)]
 pub enum EnclaveConfig<A, B> where A: AsRef<Path>, B: Into<String> {
     /// Connect to an instance of an OsKeyRing
-    OsKeyRing(OsKeyRingConfig<A, B>)
+    OsKeyRing(OsKeyRingConfig<A, B>),
+    /// Connect to a Yubihsm
+    YubiHsm
+}
+
+impl<A, B> fmt::Display for EnclaveConfig<A, B> where A: AsRef<Path>, B: Into<String> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "EnclaveConfig ({})", self)
+    }
 }
 
 /// Configuration options for connecting to the OS Keying which
@@ -159,6 +168,15 @@ pub struct OsKeyRingConfig<A: AsRef<Path>, B: Into<String>> {
     password: Option<B>
 }
 
+impl<A, B> fmt::Display for OsKeyRingConfig<A, B> where A: AsRef<Path>, B: Into<String> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "OsKeyRingConfig (path: {:?}, username: {:?}, password: {:?})",
+                  self.path.as_ref().map(|p| p.as_ref().as_os_str()),
+                  self.username.as_ref().map(|_| "*********"),
+                  self.password.as_ref().map(|_| "*********"))
+    }
+}
+
 /// All enclaves structs should use this trait so the callers
 /// can simply use them without diving into the details
 /// for each unique configuration. This trait is meant
@@ -170,3 +188,6 @@ pub trait EnclaveLike: Sized {
     /// Close the connection to the enclave
     fn close(self);
 }
+
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+pub mod macos;
