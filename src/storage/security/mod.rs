@@ -177,6 +177,8 @@ impl<A, B> fmt::Display for OsKeyRingConfig<A, B> where A: AsRef<Path>, B: Into<
     }
 }
 
+
+
 /// All enclaves structs should use this trait so the callers
 /// can simply use them without diving into the details
 /// for each unique configuration. This trait is meant

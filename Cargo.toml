@@ -21,15 +21,18 @@ opt-level = 3
 default = []
 frontend-http = ["actix", "actix-codec", "actix-web", "actix-web-actors", "rand" ]
 
-
 [dependencies]
 actix = { version = "0.9", optional = true }
 actix-codec = { version = "0.2", optional = true }
 actix-web = { version = "2.0", optional = true }
 actix-web-actors = { version = "2.0", optional = true }
 actix-rt = { version = "1.0", optional = true }
+did_doc = "0.3.1"
 failure = "0.1"
+nom = "5.0"
 rand = { version = "0.7", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 zeroize = { version = "1.1", features = ["zeroize_derive"] }
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]

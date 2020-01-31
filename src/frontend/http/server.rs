@@ -3,24 +3,22 @@
 
 use actix::prelude::*;
 use rand::prelude::*;
-use std::collections::BTreeMap;
-use std::sync::mpsc::{Sender, Receiver};
 
-pub struct AriesWsServer {
-    channels: BTreeMap<usize, (Sender, Receiver)>;
+struct 
+
+pub struct AriesServer {
     rng: ThreadRng
 }
 
-impl Default for AriesWsServer {
+impl Default for AriesServer {
     fn default() -> Self {
         Self {
-            channels: BTreeMap::new()
             rng: rand::thread_rng()
         }
     }
 }
 
-impl Actor for AriesWsServer {
+impl Actor for AriesServer {
     type Context = Context<Self>;
 }
 

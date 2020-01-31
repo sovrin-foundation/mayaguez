@@ -50,6 +50,9 @@
 //! This should be separate from the backend system but doesn't have to be.
 //! Again, this must be configurable via the `--features=` option at compile time.
 
+/// All messages handled by Aries Core
+pub mod messages;
+
 /// The frontend module
 //pub mod frontend;
 
