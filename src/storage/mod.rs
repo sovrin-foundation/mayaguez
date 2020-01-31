@@ -17,16 +17,16 @@
 //! The storage management for aries agents.
 //! This layer is composed of the authentication layer
 //! the data protection layer, and data persistance layer.
-//! 
+//!
 //! Authentication is how a connection to the storage is
-//! created and authorized. 
-//! 
+//! created and authorized.
+//!
 //! Data protection handles encrypting/decrypting data
 //! depending on how the system is to be architected.
 //! This layer could be bundled with authentication and/or
 //! the persistance layer. This is decoupled to allow
 //! for better flexibility
-//! 
+//!
 //! Data persistance is just putting the data where it can
 //! be retrieved later. This could be a database, files,
 //! cloud storage, or memory.

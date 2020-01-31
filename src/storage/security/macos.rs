@@ -41,7 +41,7 @@
 //!
 //! [codesign]: https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html#//apple_ref/doc/uid/TP40005929-CH4-SW4
 
-use super::{EnclaveLike, EnclaveResult, EnclaveConfig, EnclaveErrorKind};
+use super::{EnclaveConfig, EnclaveErrorKind, EnclaveLike, EnclaveResult};
 
 //use keychain_services::keychain::KeyChain;
 use security_framework::os::macos::keychain::*;
@@ -57,7 +57,7 @@ impl MacOsKeyRing {
         options.prompt_user(false);
         match password {
             Some(p) => options.password(p),
-            None => options.prompt_user(true)
+            None => options.prompt_user(true),
         };
 
         Ok(Self(options.create(path)?))
@@ -82,7 +82,9 @@ impl MacOsKeyRing {
 }
 
 impl EnclaveLike for MacOsKeyRing {
-    fn connect<A: AsRef<Path>, B: Into<String>>(config: EnclaveConfig<A, B>) -> EnclaveResult<Self> {
+    fn connect<A: AsRef<Path>, B: Into<String>>(
+        config: EnclaveConfig<A, B>,
+    ) -> EnclaveResult<Self> {
         if let EnclaveConfig::OsKeyRing(c) = config {
             let pass = c.password.map(|p| p.into());
             let mut keychain = match c.path {
@@ -93,15 +95,19 @@ impl EnclaveLike for MacOsKeyRing {
                     } else {
                         Self::open(path)?
                     }
-                },
-                None => {
-                    Self::default()?
                 }
+                None => Self::default()?,
             };
             keychain.unlock(pass.as_ref().map(|p| p.as_str()))?;
             Ok(keychain)
         } else {
-            Err(EnclaveErrorKind::ConnectionFailure { msg: format!("Invalid configuration type. Expected OsKeyRing but found {}", config) }.into())
+            Err(EnclaveErrorKind::ConnectionFailure {
+                msg: format!(
+                    "Invalid configuration type. Expected OsKeyRing but found {}",
+                    config
+                ),
+            }
+            .into())
         }
     }
 
