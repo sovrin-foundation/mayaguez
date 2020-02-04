@@ -4,8 +4,6 @@
 use actix::prelude::*;
 use rand::prelude::*;
 
-struct 
-
 pub struct AriesServer {
     rng: ThreadRng
 }

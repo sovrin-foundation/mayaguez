@@ -1,5 +1,5 @@
 /*
- * Copyright 2019
+ * Copyright 2020
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,6 +212,120 @@ pub trait EnclaveLike: Sized {
         -> EnclaveResult<Self>;
     /// Close the connection to the enclave
     fn close(self);
+}
+
+/// Valid key types that can be created in an enclave.
+///
+/// Not all enclaves support all key types. Please review
+/// the documentation for your respective enclave to know
+/// each of their capabilities.
+#[derive(Clone, Copy, Debug)]
+pub enum EnclaveKey {
+    /// Twisted Edwards signing key
+    Ed25519,
+    /// Key-exchange key on Curve25519
+    X25519,
+    /// Elliptic Curve diffie-hellman key-exchange key
+    Ecdh(EcCurves),
+    /// Elliptic Curve signing key
+    Ecdsa(EcCurves, EcdsaAlgorithm),
+    /// RSA encryption key with Optimal Asymmetric Encryption Padding
+    RsaOaep(RsaMgf),
+    /// RSA signing key legacy algorithm using PCKS#1v1.5 signatures (ASN.1 DER encoded)
+    /// Strongly consider using ECDSA or ED25519 or RSAPSS instead
+    RsaPkcs15(RsaMgf),
+    /// RSASSA-PSS: Probabilistic Signature Scheme based on the RSASP1 and RSAVP1 primitives with the EMSA-PSS encoding method.
+    RsaPss(RsaMgf),
+    /// Key for use with Hash-based Message Authentication Code tags
+    Hmac(HmacAlgorithm),
+    /// Key for encrypting/decrypting data
+    WrapKey(WrappingKey)
+}
+
+/// Valid algorithms for wrapping data
+#[derive(Clone, Copy, Debug)]
+pub enum WrappingKey {
+    /// AES encryption algorithm
+    Aes(AesSizes, AesModes),
+    /// XChachaPoly1305 encryption algorithm
+    XChachaPoly1305
+}
+
+/// Valid sizes for the AES algorithm
+#[derive(Clone, Copy, Debug)]
+pub enum AesSizes {
+    /// AES with 128 bit keys
+    Aes128,
+    /// AES with 192 bit keys
+    Aes192,
+    /// AES with 256 bit keys
+    Aes256
+}
+
+/// Valid AEAD modes for AES
+#[derive(Clone, Copy, Debug)]
+pub enum AesModes {
+    /// Counter with CBC-MAC mode. This is a NIST approved mode of operation defined in SP 800-38C
+    Ccm,
+    /// Galios Counter mode. This is a NIST approved mode of operation defined in SP 800-38C
+    Gcm,
+    /// Galios Counter mode with Synthetic IV as defined in RFC8452
+    GcmSiv
+}
+
+/// Valid curves for ECC operations
+#[derive(Clone, Copy, Debug)]
+pub enum EcCurves {
+    /// NIST P-256 curve
+    Secp256r1,
+    /// NIST P-384 curve
+    Secp384r1,
+    /// NIST P-512 curve
+    Secp512r1,
+    /// Koblitz 256 curve
+    Secp256k1,
+}
+
+/// Valid algorithms for ECDSA signatures
+#[derive(Clone, Copy, Debug)]
+pub enum EcdsaAlgorithm {
+    /// Sign/Verify ECC signatures using SHA1
+    /// Only use for legacy purposes as SHA1 is considered broken
+    Sha1,
+    /// Sign/Verify ECC signatures using SHA2-256
+    Sha256,
+    /// Sign/Verify ECC signatures using SHA2-384
+    Sha384,
+    /// Sign/Verify ECC signatures using SHA2-512
+    Sha512,
+}
+
+/// Valid algorithms for HMAC keys
+#[derive(Clone, Copy, Debug)]
+pub enum HmacAlgorithm {
+    /// Sign/Verify HMAC tags using SHA1
+    /// Only use for legacy purposes as SHA1 is considered broken
+    Sha1,
+    /// Sign/Verify HMAC tags using SHA2-256
+    Sha256,
+    /// Sign/Verify HMAC tags using SHA2-384
+    Sha384,
+    /// Sign/Verify HMAC tags using SHA2-512
+    Sha512,
+}
+
+/// Mask generating functions for RSA signatures
+#[derive(Clone, Copy, Debug)]
+pub enum RsaMgf {
+    /// Sign/Verify RSA signatures using SHA1
+    /// Only use for legacy purposes as SHA1 is considered broken
+    Sha1,
+    /// Sign/Verify RSA signatures using SHA2-256
+    Sha256,
+    /// Sign/Verify RSA signatures using SHA2-384
+    Sha384,
+    /// Sign/Verify RSA signatures using SHA2-512
+    Sha512,
 }
 
 #[cfg(any(target_os = "macos", target_os = "ios"))]

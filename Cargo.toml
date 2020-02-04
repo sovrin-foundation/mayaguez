@@ -28,7 +28,6 @@ actix-web = { version = "2.0", optional = true }
 actix-web-actors = { version = "2.0", optional = true }
 actix-rt = { version = "1.0", optional = true }
 atoi = "0.3"
-did_doc = "0.3.1"
 failure = "0.1"
 nom = "5.1"
 rand = { version = "0.7", optional = true }

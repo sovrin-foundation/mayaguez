@@ -1,5 +1,24 @@
+/*
+ * Copyright 2020
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -----------------------------------------------------------------------------
+ */
+//! Handles Aries URIs both protocol and messages.
+//!
+
 use nom::{
-    bytes::complete::{tag, is_a, is_not},
+    bytes::complete::{is_a, is_not, tag},
     character::complete::char,
     combinator::{map_res, opt},
     IResult,
@@ -8,12 +27,12 @@ use nom::{
 use std::{cmp::Ordering, str::FromStr};
 
 /// Represents a semantic version with an optional tag
-/// 
+///
 /// 1
 /// 1.0
 /// 1.0.0
 /// 1.0.0-alpha2
-/// 
+///
 /// are all valid
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SemanticVersion {
@@ -98,7 +117,10 @@ fn parse_semver_uri(i: &[u8]) -> IResult<&[u8], SemanticVersion> {
     let (i, minor) = parse_num(i)?;
     let (i, _) = opt(char('.'))(i)?;
     let (i, revision) = parse_num(i)?;
-    let (i, tag) = opt(map_res(is_a("abcdefghijklmnopqrstuvwxyz0123456789._-"), std::str::from_utf8))(i)?;
+    let (i, tag) = opt(map_res(
+        is_a("abcdefghijklmnopqrstuvwxyz0123456789._-"),
+        std::str::from_utf8,
+    ))(i)?;
     let minor = match minor {
         Some(d) => d,
         None => 0,
@@ -126,14 +148,14 @@ fn parse_num(i: &[u8]) -> IResult<&[u8], Option<usize>> {
     use atoi::FromRadix10Checked;
     match usize::from_radix_10_checked(i) {
         (_, 0) => Ok((i, None)),
-        (n, used) => Ok((&i[used..], n))
+        (n, used) => Ok((&i[used..], n)),
     }
 }
 
 /// Represents a Message Type Uri
 #[derive(Clone, Debug)]
 pub struct MessageTypeUri {
-    /// The message method 
+    /// The message method
     pub method: String,
     /// The document URI
     pub doc_uri: String,
@@ -152,7 +174,7 @@ impl Default for MessageTypeUri {
             doc_uri: String::new(),
             protocol_name: String::new(),
             protocol_version: SemanticVersion::default(),
-            msg_type_name: None
+            msg_type_name: None,
         }
     }
 }
@@ -169,13 +191,17 @@ impl FromStr for MessageTypeUri {
     }
 }
 
+/// Parse a byte stream into a MessageType
 fn parse_message_type_uri(i: &[u8]) -> IResult<&[u8], MessageTypeUri> {
     if i.len() == 0 {
         return Ok((i, MessageTypeUri::default()));
     }
 
     let (i, _) = tag("did:")(i)?;
-    let (i, method) = map_res(is_a("abcdefghijklmnopqrstuvwxyz0123456789"), std::str::from_utf8)(i)?;
+    let (i, method) = map_res(
+        is_a("abcdefghijklmnopqrstuvwxyz0123456789"),
+        std::str::from_utf8,
+    )(i)?;
     let (i, _) = char(':')(i)?;
     let (i, doc_uri) = map_res(is_not(";"), std::str::from_utf8)(i)?;
     let (i, _) = tag(";spec/")(i)?;
@@ -183,7 +209,10 @@ fn parse_message_type_uri(i: &[u8]) -> IResult<&[u8], MessageTypeUri> {
     let (i, _) = char('/')(i)?;
     let (i, protocol_version) = parse_semver_uri(i)?;
     let (i, _) = opt(tag("/"))(i)?;
-    let (i, msg_type_name) = opt(map_res(is_a("abccdefghijklmnopqrstuvwxyz0123456789._-"), std::str::from_utf8))(i)?;
+    let (i, msg_type_name) = opt(map_res(
+        is_a("abccdefghijklmnopqrstuvwxyz0123456789._-"),
+        std::str::from_utf8,
+    ))(i)?;
 
     Ok((
         i,
@@ -221,7 +250,7 @@ pub enum ProtocolName {
     /// Routing messages
     Routing,
     /// Trust pring messages
-    TrustPing
+    TrustPing,
 }
 
 #[cfg(test)]
@@ -230,12 +259,13 @@ mod tests {
 
     #[test]
     fn semver_test() {
-        for v in vec![("1", 1, 0, 0, String::new()),
-                      ("0.1", 0, 1, 0, String::new()),
-                      ("0.1.0", 0, 1, 0, String::new()),
-                      ("1.0.0-pre3", 1, 0, 0, "-pre3".to_string()),
-                      ("2.1.111-alpha3", 2, 1, 111, "-alpha3".to_string())
-                     ] {
+        for v in vec![
+            ("1", 1, 0, 0, String::new()),
+            ("0.1", 0, 1, 0, String::new()),
+            ("0.1.0", 0, 1, 0, String::new()),
+            ("1.0.0-pre3", 1, 0, 0, "-pre3".to_string()),
+            ("2.1.111-alpha3", 2, 1, 111, "-alpha3".to_string()),
+        ] {
             let res = SemanticVersion::from_str(v.0);
             assert!(res.is_ok());
             let semver = res.unwrap();
@@ -249,7 +279,8 @@ mod tests {
     #[test]
     fn message_uri_test() {
         println!(r#"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping"#);
-        let res = MessageTypeUri::from_str(r#"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping"#);
+        let res =
+            MessageTypeUri::from_str(r#"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping"#);
         println!("{:?}", res);
         assert!(res.is_ok());
         let msg = res.unwrap();
