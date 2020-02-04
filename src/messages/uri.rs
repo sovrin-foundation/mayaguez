@@ -1,5 +1,5 @@
 use nom::{
-    bytes::complete::{is_not, tag, take_until, take_while},
+    bytes::complete::{tag, is_a, is_not},
     character::complete::char,
     combinator::{map_res, opt},
     IResult,
@@ -98,7 +98,7 @@ fn parse_semver_uri(i: &[u8]) -> IResult<&[u8], SemanticVersion> {
     let (i, minor) = parse_num(i)?;
     let (i, _) = opt(char('.'))(i)?;
     let (i, revision) = parse_num(i)?;
-    let (i, tag) = opt(map_res(take_while(is_id_char), std::str::from_utf8))(i)?;
+    let (i, tag) = opt(map_res(is_a("abcdefghijklmnopqrstuvwxyz0123456789._-"), std::str::from_utf8))(i)?;
     let minor = match minor {
         Some(d) => d,
         None => 0,
@@ -133,8 +133,8 @@ fn parse_num(i: &[u8]) -> IResult<&[u8], Option<usize>> {
 /// Represents a Message Type Uri
 #[derive(Clone, Debug)]
 pub struct MessageTypeUri {
-    /// The scheme used by the message type
-    pub scheme: String,
+    /// The message method 
+    pub method: String,
     /// The document URI
     pub doc_uri: String,
     /// The protocol name
@@ -142,17 +142,17 @@ pub struct MessageTypeUri {
     /// The protocol version
     pub protocol_version: SemanticVersion,
     /// The message type name
-    pub msg_type_name: String,
+    pub msg_type_name: Option<String>,
 }
 
 impl Default for MessageTypeUri {
     fn default() -> Self {
         Self {
-            scheme: String::new(),
+            method: String::new(),
             doc_uri: String::new(),
             protocol_name: String::new(),
             protocol_version: SemanticVersion::default(),
-            msg_type_name: String::new()
+            msg_type_name: None
         }
     }
 }
@@ -161,10 +161,11 @@ impl FromStr for MessageTypeUri {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match parse_message_type_uri(s.as_bytes()) {
-            Ok((_, v)) => Ok(v),
-            Err(e) => Err(format!("Invalid message type uri: {:?}", e)),
+        if s.len() == 0 {
+            return Ok(MessageTypeUri::default());
         }
+        let (_, m) = parse_message_type_uri(s.as_bytes()).map_err(|e| format!("{:?}", e))?;
+        Ok(m)
     }
 }
 
@@ -173,30 +174,54 @@ fn parse_message_type_uri(i: &[u8]) -> IResult<&[u8], MessageTypeUri> {
         return Ok((i, MessageTypeUri::default()));
     }
 
-    let (i, scheme) = map_res(take_until("://"), std::str::from_utf8)(i)?;
-    let (i, _) = tag("://")(i)?;
-    let (i, doc_uri) = map_res(is_not("?/&:;="), std::str::from_utf8)(i)?;
-    let (i, protocol_name) = map_res(take_until("/"), std::str::from_utf8)(i)?;
-    let (i, _) = tag("/")(i)?;
+    let (i, _) = tag("did:")(i)?;
+    let (i, method) = map_res(is_a("abcdefghijklmnopqrstuvwxyz0123456789"), std::str::from_utf8)(i)?;
+    let (i, _) = char(':')(i)?;
+    let (i, doc_uri) = map_res(is_not(";"), std::str::from_utf8)(i)?;
+    let (i, _) = tag(";spec/")(i)?;
+    let (i, protocol_name) = map_res(is_not("/"), std::str::from_utf8)(i)?;
+    let (i, _) = char('/')(i)?;
     let (i, protocol_version) = parse_semver_uri(i)?;
-    let (i, _) = tag("/")(i)?;
-    let (i, msg_type_name) = map_res(take_while(is_id_char), std::str::from_utf8)(i)?;
+    let (i, _) = opt(tag("/"))(i)?;
+    let (i, msg_type_name) = opt(map_res(is_a("abccdefghijklmnopqrstuvwxyz0123456789._-"), std::str::from_utf8))(i)?;
 
     Ok((
         i,
         MessageTypeUri {
-            scheme: scheme.to_string(),
+            method: method.to_string(),
             doc_uri: doc_uri.to_string(),
             protocol_name: protocol_name.to_string(),
             protocol_version,
-            msg_type_name: msg_type_name.to_string(),
+            msg_type_name: msg_type_name.map(|s| s.to_string()),
         },
     ))
 }
 
-fn is_id_char(c: u8) -> bool {
-    let c = c as char;
-    c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-'
+/// All the protocol names supported by Aries
+#[derive(Clone, Debug)]
+pub enum ProtocolName {
+    /// Action menu messages
+    ActionMenu,
+    /// Basic messages
+    BasicMessage,
+    /// Connection messages
+    Connections,
+    /// Credential issuance messages
+    CredentialIssuance,
+    /// Discover messages
+    Discover,
+    /// Introduction messages
+    Introduction,
+    /// Present proof messages
+    PresentProof,
+    /// Credential presentation messages
+    CredentialPresentation,
+    /// Notification messages
+    Notification,
+    /// Routing messages
+    Routing,
+    /// Trust pring messages
+    TrustPing
 }
 
 #[cfg(test)]
@@ -205,12 +230,29 @@ mod tests {
 
     #[test]
     fn semver_test() {
-        let res = SemanticVersion::from_str("1.0");
+        for v in vec![("1", 1, 0, 0, String::new()),
+                      ("0.1", 0, 1, 0, String::new()),
+                      ("0.1.0", 0, 1, 0, String::new()),
+                      ("1.0.0-pre3", 1, 0, 0, "-pre3".to_string()),
+                      ("2.1.111-alpha3", 2, 1, 111, "-alpha3".to_string())
+                     ] {
+            let res = SemanticVersion::from_str(v.0);
+            assert!(res.is_ok());
+            let semver = res.unwrap();
+            assert_eq!(semver.major, v.1);
+            assert_eq!(semver.minor, v.2);
+            assert_eq!(semver.revision, v.3);
+            assert_eq!(semver.tag, v.4);
+        }
+    }
+
+    #[test]
+    fn message_uri_test() {
+        println!(r#"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping"#);
+        let res = MessageTypeUri::from_str(r#"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping"#);
+        println!("{:?}", res);
         assert!(res.is_ok());
-        let semver = res.unwrap();
-        assert_eq!(semver.major, 1);
-        assert_eq!(semver.minor, 0);
-        assert_eq!(semver.revision, 0);
-        assert_eq!(semver.tag, String::new());
+        let msg = res.unwrap();
+        println!("{:?}", msg);
     }
 }
