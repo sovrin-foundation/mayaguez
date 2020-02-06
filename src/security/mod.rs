@@ -328,9 +328,8 @@ pub enum RsaMgf {
     Sha512,
 }
 
-/// Provides access to the MacOS KeyRing and Enclave
-#[cfg(any(target_os = "macos", target_os = "ios"))]
-pub mod macos;
+/// Provides access to the OS keyring and enclaves
+pub mod os;
 
 /// A null enclave. Basically is just a pass through.
 /// 

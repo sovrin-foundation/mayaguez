@@ -24,7 +24,7 @@ use super::*;
 pub struct NullEnclave;
 
 impl EnclaveLike for NullEnclave {
-    fn connect<A: AsRef<Path>, B: Into<String>>(config: EnclaveConfig<A, B>) -> EnclaveResult<Self> {
+    fn connect<A: AsRef<Path>, B: Into<String>>(_: EnclaveConfig<A, B>) -> EnclaveResult<Self> {
         Ok(Self{})
     }
 

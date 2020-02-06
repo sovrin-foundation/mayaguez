@@ -67,6 +67,7 @@
 //! be retrieved later. This could be a database, files,
 //! cloud storage, or memory. 
 
-/// The storage modules
+/// The security modules
 pub mod security;
+/// The persistence modules
 pub mod persistence;

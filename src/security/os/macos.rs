@@ -41,7 +41,7 @@
 //!
 //! [codesign]: https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html#//apple_ref/doc/uid/TP40005929-CH4-SW4
 
-use super::{EnclaveConfig, EnclaveErrorKind, EnclaveLike, EnclaveResult};
+use super::super::{EnclaveConfig, EnclaveErrorKind, EnclaveLike, EnclaveResult};
 
 //use keychain_services::keychain::KeyChain;
 use security_framework::os::macos::keychain::*;
