@@ -1,5 +1,5 @@
 /*
- * Copyright 2019
+ * Copyright 2020
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,24 @@
 //! The storage layer is how the agent will store state and other information long term.
 //! This should be separate from the backend system but doesn't have to be.
 //! Again, this must be configurable via the `--features=` option at compile time.
-
-/// All messages handled by Aries Core
-pub mod messages;
-
-/// The frontend module
-//pub mod frontend;
+//! The focus of this project is to enable secure, misuse-resistant agent storage.
+//! 
+//! Storage is composed of the authentication layer
+//! the data protection layer, and data persistance layer.
+//!
+//! Authentication is how a connection to the storage is
+//! created and authorized.
+//!
+//! Data protection handles encrypting/decrypting data
+//! depending on how the system is to be architected.
+//! This layer could be bundled with authentication and/or
+//! the persistance layer. This is decoupled to allow
+//! for better flexibility
+//!
+//! Data persistance is just putting the data where it can
+//! be retrieved later. This could be a database, files,
+//! cloud storage, or memory. 
 
 /// The storage modules
-pub mod storage;
+pub mod security;
+pub mod persistence;

@@ -3,14 +3,14 @@ authors = ["The Hyperledger Aries Contributors"]
 edition = "2018"
 exclude = [".gitignore"]
 keywords = ["agents", "aries", "blockchain", "hyperledger"]
-name = "aries"
+name = "arieskms"
 license = "Apache-2.0"
 readme = "README.md"
 version = "0.1.0"
 
 [lib]
 crate-type = ["staticlib", "rlib", "cdylib"]
-name = "aries"
+name = "arieskms"
 path = "src/lib.rs"
 
 [profile.release]
@@ -19,7 +19,7 @@ opt-level = 3
 
 [features]
 default = []
-frontend-http = ["actix", "actix-codec", "actix-web", "actix-web-actors", "rand" ]
+storage-sqlite = ["rusqlite"]
 
 [dependencies]
 actix = { version = "0.9", optional = true }
@@ -31,6 +31,7 @@ atoi = "0.3"
 failure = "0.1"
 nom = "5.1"
 rand = { version = "0.7", optional = true }
+rusqlite = { version = "0.21", optional = true, features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 zeroize = { version = "1.1", features = ["zeroize_derive"] }

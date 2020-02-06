@@ -220,7 +220,7 @@ pub trait EnclaveLike: Sized {
 /// the documentation for your respective enclave to know
 /// each of their capabilities.
 #[derive(Clone, Copy, Debug)]
-pub enum EnclaveKey {
+pub enum EnclaveKeytype {
     /// Twisted Edwards signing key
     Ed25519,
     /// Key-exchange key on Curve25519
@@ -328,5 +328,12 @@ pub enum RsaMgf {
     Sha512,
 }
 
+/// Provides access to the MacOS KeyRing and Enclave
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 pub mod macos;
+
+/// A null enclave. Basically is just a pass through.
+/// 
+/// Do NOT use this except for debugging purposes or
+/// your backend already provides crypto services
+pub mod null;
