@@ -65,7 +65,9 @@
 //!
 //! Data persistance is just putting the data where it can
 //! be retrieved later. This could be a database, files,
-//! cloud storage, or memory. 
+//! cloud storage, or memory.
+
+#[macro_use] extern crate bitflags;
 
 /// The security modules
 pub mod security;
