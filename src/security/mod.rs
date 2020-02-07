@@ -49,18 +49,18 @@ pub type EnclaveResult<T> = Result<T, errors::EnclaveError>;
 /// For now, we do not support attestations as these are often
 /// broken anyway and complex.
 #[derive(Debug)]
-pub enum EnclaveConfig<A, B>
+pub enum EnclaveConnector<A, B>
 where
     A: AsRef<Path>,
     B: Into<String>,
 {
     /// Connect to an instance of an OsKeyRing
-    OsKeyRing(OsKeyRingConfig<A, B>),
+    OsKeyRing(OsKeyRingConnector<A, B>),
     /// Connect to a Yubihsm
     YubiHsm,
 }
 
-impl<A, B> fmt::Display for EnclaveConfig<A, B>
+impl<A, B> fmt::Display for EnclaveConnector<A, B>
 where
     A: AsRef<Path>,
     B: Into<String>,
@@ -73,7 +73,7 @@ where
 /// Configuration options for connecting to the OS Keying which
 /// may be backed by a hardware enclave
 #[derive(Clone, Debug, PartialEq, Eq, Zeroize)]
-pub struct OsKeyRingConfig<A: AsRef<Path>, B: Into<String>> {
+pub struct OsKeyRingConnector<A: AsRef<Path>, B: Into<String>> {
     /// Path to the keyring. If `None`, it will use the default OS keyring
     path: Option<A>,
     /// The username to use for logging in. If `None`, the user will be prompted
@@ -82,7 +82,7 @@ pub struct OsKeyRingConfig<A: AsRef<Path>, B: Into<String>> {
     password: Option<B>,
 }
 
-impl<A, B> fmt::Display for OsKeyRingConfig<A, B>
+impl<A, B> fmt::Display for OsKeyRingConnector<A, B>
 where
     A: AsRef<Path>,
     B: Into<String>,
@@ -105,10 +105,12 @@ where
 /// to mess up––misuse resistant.
 pub trait EnclaveLike: Sized {
     /// Establish a connection to the enclave
-    fn connect<A: AsRef<Path>, B: Into<String>>(config: EnclaveConfig<A, B>)
+    fn connect<A: AsRef<Path>, B: Into<String>>(config: EnclaveConnector<A, B>)
         -> EnclaveResult<Self>;
     /// Close the connection to the enclave
     fn close(self);
+    /// The capabilities of the enclave
+    fn capabilities(&self) -> EnclaveCapabilities;
 }
 
 /// Valid key types that can be created in an enclave.

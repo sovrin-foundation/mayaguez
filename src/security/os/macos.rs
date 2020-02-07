@@ -41,9 +41,8 @@
 //!
 //! [codesign]: https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html#//apple_ref/doc/uid/TP40005929-CH4-SW4
 
-use crate::security::{EnclaveConfig, EnclaveLike, EnclaveResult, errors::EnclaveErrorKind};
+use crate::security::{EnclaveConnector, EnclaveLike, EnclaveResult, EnclaveCapabilities, errors::EnclaveErrorKind};
 
-//use keychain_services::keychain::KeyChain;
 use security_framework::os::macos::keychain::*;
 use std::path::Path;
 
@@ -83,9 +82,9 @@ impl MacOsKeyRing {
 
 impl EnclaveLike for MacOsKeyRing {
     fn connect<A: AsRef<Path>, B: Into<String>>(
-        config: EnclaveConfig<A, B>,
+        config: EnclaveConnector<A, B>,
     ) -> EnclaveResult<Self> {
-        if let EnclaveConfig::OsKeyRing(c) = config {
+        if let EnclaveConnector::OsKeyRing(c) = config {
             let pass = c.password.map(|p| p.into());
             let mut keychain = match c.path {
                 Some(p) => {
@@ -112,4 +111,8 @@ impl EnclaveLike for MacOsKeyRing {
     }
 
     fn close(self) {}
+
+    fn capabilities(&self) -> EnclaveCapabilities {
+        EnclaveCapabilities::all()
+    }
 }
